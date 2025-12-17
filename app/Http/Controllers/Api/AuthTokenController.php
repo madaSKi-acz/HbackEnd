@@ -10,28 +10,17 @@ class AuthTokenController extends Controller
 {
     public function login(Request $request)
     {
-        $deviceName = $request->userAgent() ?? 'Unknown Device';
-
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        if (!Auth::attempt([
-            'email' => $credentials['email'],
-            'password' => $credentials['password'],
-        ])) {
-            return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+        if (!Auth::attempt($credentials)) {
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
-        
-        $user = Auth::user();
-        $token = $user->createToken($deviceName)->plainTextToken;
 
-        return response()->json([
-            'token' => $token,
-        ]);
+        // Success: Session is now active, browser has HttpOnly cookie
+        return response()->json(['message' => 'Logged in successfully']);
     }
 
     /**
@@ -39,10 +28,11 @@ class AuthTokenController extends Controller
      */
     public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();  // Clears the session
 
-        return response()->json([
-            'message' => 'Token revoked'
-        ]);
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return response()->json(['message' => 'Logged out successfully']);
     }
 }

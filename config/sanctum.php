@@ -61,6 +61,7 @@ return [
     | See: https://docs.github.com/en/code-security/secret-scanning/about-secret-scanning
     |
     */
+    'prefix' => 'api/sanctum',
 
     'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
 
