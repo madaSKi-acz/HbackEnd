@@ -12,7 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
+
+        // clients verification.
+        // $middleware->api(append: [
+        //     \App\Http\Middleware\BindSessionToClient::class,
+        // ]);
+        $middleware->alias([
+            'webauthn.bound' => \App\Http\Middleware\BindSessionToClient::class,
+            // Add others if needed
+        ]);
     })
+    
     ->withExceptions(function (Exceptions $exceptions): void {
         //
     })->create();
