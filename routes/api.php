@@ -11,8 +11,10 @@ Route::post('/logout', [AuthTokenController::class, 'logout'])->middleware('auth
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/webauthn/register/options', [WebAuthnController::class, 'registerOptions']);
     Route::post('/webauthn/register/verify', [WebAuthnController::class, 'registerVerify']);
-});
 
-Route::middleware(['auth:sanctum', 'webauthn.bound'])->group(function () {
     Route::apiResource('users', UsersController::class);
 });
+
+// Route::middleware(['auth:sanctum', 'webauthn.bound'])->group(function () {
+//     Route::apiResource('users', UsersController::class);
+// });
