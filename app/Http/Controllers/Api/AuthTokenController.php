@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cookie;
 
 class AuthTokenController extends Controller
 {
@@ -27,7 +28,7 @@ class AuthTokenController extends Controller
         }
 
         // Use WEB guard for SPA session auth (Sanctum expects this)
-        Auth::guard('web')->login($user);  // TRUE = remember me
+        Auth::guard('web')->login($user);
         $request->session()->regenerate();
 
         // Generate/store client_id (random UUID for binding)
@@ -39,17 +40,29 @@ class AuthTokenController extends Controller
         return response()->json(['message' => 'Logged in successfully']);
     }
 
-    /**
-     * Logout (revoke session)
-     */
     public function logout(Request $request)
     {
         Log::info('Logout', ['user_id' => Auth::id()]);
 
-        Auth::guard('web')->logout();  // Clears the session
+        // 1. Logout the user from the web guard
+        Auth::guard('web')->logout();
 
+        // 2. Invalidate the session
         $request->session()->invalidate();
+
+        // 3. Regenerate CSRF token
         $request->session()->regenerateToken();
+
+        // 4. Explicitly forget sensitive cookies
+        $cookieName = config('session.cookie'); // usually "laravel_session"
+        Cookie::queue(Cookie::forget($cookieName));
+        Cookie::queue(Cookie::forget('XSRF-TOKEN'));
+
+        // 5. (Optional) Revoke WebAuthn credentials if you want logout to remove them
+        if ($user = Auth::user()) {
+            $user->webauthnCredentials()->delete();
+            Log::info('WebAuthn credentials revoked', ['user_id' => $user->id]);
+        }
 
         return response()->json(['message' => 'Logged out successfully']);
     }
